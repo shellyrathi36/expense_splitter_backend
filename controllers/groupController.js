@@ -151,13 +151,14 @@ export const findEachmemberNameBalanceEmail = async (req, res) => {
     );
     if (!group) return res.status(404).json({ message: "Group not found" });
 
-    // Initialize balances
+    // Initialize balances with an array to store expense names
     const balances = {};
     group.members.forEach((member) => {
       balances[member._id.toString()] = {
         amount: 0,
         name: member.name,
         email: member.email,
+        expenses: [], // track related expenses
       };
     });
 
@@ -165,14 +166,21 @@ export const findEachmemberNameBalanceEmail = async (req, res) => {
     const expenses = await Expense.find({ group: groupId });
     for (const exp of expenses) {
       const share = exp.amount / exp.sharedWith.length;
+
       // Deduct from shared members
       exp.sharedWith.forEach((m) => {
-        const id = m.toString();
-        if (balances[id]) balances[id].amount -= share;
+        const id = m.user.toString();
+        if (balances[id]) {
+          balances[id].amount -= share;
+          balances[id].expenses.push(exp.expenseName);
+        }
       });
+
       // Credit to payer
-      if (balances[exp.owner.toString()])
+      if (balances[exp.owner.toString()]) {
         balances[exp.owner.toString()].amount += exp.amount;
+        balances[exp.owner.toString()].expenses.push(exp.expenseName);
+      }
     }
 
     // Prepare response
@@ -181,6 +189,7 @@ export const findEachmemberNameBalanceEmail = async (req, res) => {
       name: data.name,
       email: data.email,
       balance: Number(data.amount.toFixed(2)),
+      expenses: [...new Set(data.expenses)], // remove duplicates
     }));
 
     res.status(200).json({ groupName: group.name, balances: result });
@@ -243,30 +252,28 @@ export const clearMemberBalance = async (req, res) => {
         .json({ message: "Both groupId and memberId are required" });
     }
 
-    // ✅ Check if group exists
     const group = await Group.findById(groupId).populate("expenses");
     if (!group) {
       return res.status(404).json({ message: "Group not found" });
     }
 
-    // ✅ Get all expenses related to that group
     const expenses = await Expense.find({ group: groupId });
 
-    // ✅ Loop through each expense and set that member's amount = 0
     for (const expense of expenses) {
       let updated = false;
 
-      // Update member in sharedWith array
-      expense.sharedWith = expense.sharedWith.map((s) => {
-        if (s.user.toString() === memberId) {
-          updated = true;
-          return { ...s.toObject(), amount: 0 };
-        }
-        return s;
-      });
+      // Update sharedWith safely
+      expense.sharedWith = expense.sharedWith
+        .filter((s) => s.user) // remove invalid
+        .map((s) => {
+          if (s.user.toString() === memberId) {
+            updated = true;
+            return { user: s.user, amount: 0 };
+          }
+          return { user: s.user, amount: s.amount };
+        });
 
-      // If user is the owner and they paid something, handle it too
-      if (expense.owner.toString() === memberId) {
+      if (expense.owner && expense.owner.toString() === memberId) {
         updated = true;
         expense.amount = 0;
       }
