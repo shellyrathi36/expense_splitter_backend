@@ -60,6 +60,9 @@ export const createGroup = async (req, res) => {
 // ---------------------------
 // Add a member by email to group
 // ---------------------------
+// Lets you add a new user (by email) to an existing group.
+
+// Keeps the data consistent by updating both user and group collections.
 export const addMemberByEmailToGroup = async (req, res) => {
   try {
     const { groupId, email } = req.body;
@@ -96,6 +99,9 @@ export const addMemberByEmailToGroup = async (req, res) => {
 // ---------------------------
 // Get groups for logged-in user
 // ---------------------------
+// Fetches all the groups a user belongs to.
+
+// Useful for the Dashboard or Group List in the frontend.
 export const getUserGroups = async (req, res) => {
   try {
     if (!req.user || !req.user.id) {
@@ -122,6 +128,8 @@ export const getUserGroups = async (req, res) => {
 // ---------------------------
 // Get group by ID
 // ---------------------------
+
+//for displaying the summary of a particular group id!!!
 export const getGroupById = async (req, res) => {
   try {
     const { groupId } = req.params;
@@ -139,6 +147,12 @@ export const getGroupById = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+// Core of the app’s logic — calculates how much each member owes or gets back.
+
+// Reads all expenses, computes credits/debits, and prepares a balance summary.
+
+// Used to show balances in the frontend (SummaryModal or Dashboard)
 
 export const findEachmemberNameBalanceEmail = async (req, res) => {
   try {
