@@ -1,4 +1,3 @@
-// db.js
 import mongoose from "mongoose";
 
 const MONGODB_URI = "mongodb://localhost:27017/expensesplitter"; // Change as needed

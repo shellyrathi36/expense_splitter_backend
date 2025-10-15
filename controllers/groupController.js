@@ -34,7 +34,7 @@ export const createGroup = async (req, res) => {
     if (!memberIds.includes(req.user.id)) {
       memberIds.push(req.user.id);
     }
-
+    //group array being uodated over here
     const group = new Group({
       name: groupName,
       members: memberIds,
@@ -102,6 +102,7 @@ export const addMemberByEmailToGroup = async (req, res) => {
 // Fetches all the groups a user belongs to.
 
 // Useful for the Dashboard or Group List in the frontend.
+//extremely tricky faced lots of error in this
 export const getUserGroups = async (req, res) => {
   try {
     if (!req.user || !req.user.id) {
@@ -197,6 +198,8 @@ export const findEachmemberNameBalanceEmail = async (req, res) => {
       }
     }
 
+    //clik on the group dashboard then these things are actually getting viviblied as welll
+
     // Prepare response
     const result = Object.entries(balances).map(([id, data]) => ({
       id,
@@ -213,95 +216,95 @@ export const findEachmemberNameBalanceEmail = async (req, res) => {
   }
 };
 
-export const handleClearExpense = async (req, res) => {
-  try {
-    const { groupId, expenseId } = req.params;
+// export const handleClearExpense = async (req, res) => {
+//   try {
+//     const { groupId, expenseId } = req.params;
 
-    // Validate params
-    if (!groupId || !expenseId) {
-      return res
-        .status(400)
-        .json({ message: "Both groupId and expenseId are required" });
-    }
+//     // Validate params
+//     if (!groupId || !expenseId) {
+//       return res
+//         .status(400)
+//         .json({ message: "Both groupId and expenseId are required" });
+//     }
 
-    // Check if group exists
-    const group = await Group.findById(groupId);
-    if (!group) {
-      return res.status(404).json({ message: "Group not found" });
-    }
+//     // Check if group exists
+//     const group = await Group.findById(groupId);
+//     if (!group) {
+//       return res.status(404).json({ message: "Group not found" });
+//     }
 
-    // Check if expense exists in that group
-    const expense = await Expense.findById(expenseId);
-    if (!expense) {
-      return res.status(404).json({ message: "Expense not found" });
-    }
+//     // Check if expense exists in that group
+//     const expense = await Expense.findById(expenseId);
+//     if (!expense) {
+//       return res.status(404).json({ message: "Expense not found" });
+//     }
 
-    // Remove expense from group.expenses array
-    group.expenses = group.expenses.filter(
-      (exp) => exp.toString() !== expenseId.toString()
-    );
-    await group.save();
+//     // Remove expense from group.expenses array
+//     group.expenses = group.expenses.filter(
+//       (exp) => exp.toString() !== expenseId.toString()
+//     );
+//     await group.save();
 
-    // Delete expense document itself
-    await Expense.findByIdAndDelete(expenseId);
+//     // Delete expense document itself
+//     await Expense.findByIdAndDelete(expenseId);
 
-    res.status(200).json({
-      message: "Expense cleared successfully",
-      groupId,
-      expenseId,
-    });
-  } catch (err) {
-    console.error("Error in handleClearExpense:", err);
-    res.status(500).json({ message: err.message });
-  }
-};
+//     res.status(200).json({
+//       message: "Expense cleared successfully",
+//       groupId,
+//       expenseId,
+//     });
+//   } catch (err) {
+//     console.error("Error in handleClearExpense:", err);
+//     res.status(500).json({ message: err.message });
+//   }
+// };
 
-export const clearMemberBalance = async (req, res) => {
-  try {
-    const { groupId, memberId } = req.params;
+// export const clearMemberBalance = async (req, res) => {
+//   try {
+//     const { groupId, memberId } = req.params;
 
-    if (!groupId || !memberId) {
-      return res
-        .status(400)
-        .json({ message: "Both groupId and memberId are required" });
-    }
+//     if (!groupId || !memberId) {
+//       return res
+//         .status(400)
+//         .json({ message: "Both groupId and memberId are required" });
+//     }
 
-    const group = await Group.findById(groupId).populate("expenses");
-    if (!group) {
-      return res.status(404).json({ message: "Group not found" });
-    }
+//     const group = await Group.findById(groupId).populate("expenses");
+//     if (!group) {
+//       return res.status(404).json({ message: "Group not found" });
+//     }
 
-    const expenses = await Expense.find({ group: groupId });
+//     const expenses = await Expense.find({ group: groupId });
 
-    for (const expense of expenses) {
-      let updated = false;
+//     for (const expense of expenses) {
+//       let updated = false;
 
-      // Update sharedWith safely
-      expense.sharedWith = expense.sharedWith
-        .filter((s) => s.user) // remove invalid
-        .map((s) => {
-          if (s.user.toString() === memberId) {
-            updated = true;
-            return { user: s.user, amount: 0 };
-          }
-          return { user: s.user, amount: s.amount };
-        });
+//       // Update sharedWith safely
+//       expense.sharedWith = expense.sharedWith
+//         .filter((s) => s.user) // remove invalid
+//         .map((s) => {
+//           if (s.user.toString() === memberId) {
+//             updated = true;
+//             return { user: s.user, amount: 0 };
+//           }
+//           return { user: s.user, amount: s.amount };
+//         });
 
-      if (expense.owner && expense.owner.toString() === memberId) {
-        updated = true;
-        expense.amount = 0;
-      }
+//       if (expense.owner && expense.owner.toString() === memberId) {
+//         updated = true;
+//         expense.amount = 0;
+//       }
 
-      if (updated) await expense.save();
-    }
+//       if (updated) await expense.save();
+//     }
 
-    res.status(200).json({
-      message: "Member balance cleared successfully",
-      groupId,
-      memberId,
-    });
-  } catch (err) {
-    console.error("Error in clearMemberBalance:", err);
-    res.status(500).json({ message: err.message });
-  }
-};
+//     res.status(200).json({
+//       message: "Member balance cleared successfully",
+//       groupId,
+//       memberId,
+//     });
+//   } catch (err) {
+//     console.error("Error in clearMemberBalance:", err);
+//     res.status(500).json({ message: err.message });
+//   }
+// };

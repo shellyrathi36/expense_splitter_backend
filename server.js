@@ -9,16 +9,7 @@ import dashrouter from "./routes/dashRoute.js";
 const PORT = 3000;
 const app = express();
 app.use(express.json());
-app.use(
-  cors({
-    origin: [
-      "http://localhost:5174",
-      "https://shellyrathi36.github.io/expense_splitter_frontend/",
-    ],
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
-    credentials: true,
-  })
-);
+app.use(cors({ origin: "*", credentials: true }));
 connectDB();
 app.use("/api", router);
 app.use("/api/expenses", exrouter);

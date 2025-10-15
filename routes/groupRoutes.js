@@ -5,8 +5,6 @@ import {
   getUserGroups,
   getGroupById,
   findEachmemberNameBalanceEmail,
-  handleClearExpense,
-  clearMemberBalance,
 } from "../controllers/groupController.js";
 import { authMiddleware } from "../middlewares/authMiddleware.js";
 import { getGroupBalanceDetails } from "../controllers/balanceController.js";
@@ -30,6 +28,8 @@ gprouter.get("/summary", authMiddleware, getGroupSummary);
 gprouter.get("/:groupId", authMiddleware, getGroupById);
 
 // ✅ Fetch each member’s name, email, and balance in the group
+//this was used in the SummaryModal
+// i designed the newer one because this was creating the redundancy with the getGroupBalanceDetails
 gprouter.get(
   "/:groupId/balances",
   authMiddleware,
@@ -43,15 +43,6 @@ gprouter.get(
   getGroupBalanceDetails
 );
 
-gprouter.delete(
-  "/:groupId/:expenseId/clear",
-  authMiddleware,
-  handleClearExpense
-);
-gprouter.put(
-  "/:groupId/member/:memberId/clear",
-  authMiddleware,
-  clearMemberBalance
-);
+gprouter.get("/:groupId/summary", authMiddleware, getGroupSummary);
 
 export default gprouter;
